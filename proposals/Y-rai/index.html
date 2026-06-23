@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>クロードコードカンパニー — 測って、つくる。</title>
+<meta name="description" content="最初の一画面で実力を証明し、最後の一画面まで精度を落とさない。動く設計図で技術を見せるWeb制作プロダクション。">
+
+<!-- Fonts: display=Space Grotesk / body=Inter / data=JetBrains Mono -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   LIVING BLUEPRINT — 案Y / 動・技術の頂点 (ライ)
+   核: 測る=動詞。見えない基準線が会社名を構築する。
+   全モーションに「測る・作る」の意味を宿らせる。
+   ============================================================ */
+
+:root{
+  /* --- 製図環境の色 (装飾でなく計器の意味) --- */
+  --void:#0B0E14;     /* 夜の製図台 */
+  --graph:#141A24;    /* 方眼紙の面 */
+  --ink:#ECF1F6;      /* 引かれた線=確定した結果 */
+  --datum:#3DD6C4;    /* 計測済み=確証のシグナル */
+  --annot:#F2A93B;    /* 注記・公差=人の手の書き込み */
+  --mute:#828E9E;     /* 寸法テキスト(AA-normal対応) */
+  --line:#27313F;     /* グリッド罫 */
+  --line-2:#1B232E;   /* 細グリッド罫 */
+
+  /* --- vertical rhythm 基準 (8px格子で全要素を揃える) --- */
+  --u:8px;
+  --gut:clamp(20px, 5vw, 64px);
+  --maxw:1280px;
+
+  --f-display:"Space Grotesk", system-ui, sans-serif;
+  --f-body:"Inter", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, monospace;
+
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} }
+
+body{
+  background:var(--void);
+  color:var(--ink);
+  font-family:var(--f-body);
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+  /* 微細な方眼を全面に敷く=製図台の地 */
+  background-image:
+    linear-gradient(var(--line-2) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-2) 1px, transparent 1px);
+  background-size: calc(var(--u)*5) calc(var(--u)*5);
+  background-position: center top;
+}
+
+::selection{background:var(--datum);color:var(--void)}
+
+/* --- アクセシビリティの土台 --- */
+.skip{
+  position:absolute;left:var(--u);top:var(--u);z-index:200;
+  background:var(--datum);color:var(--void);
+  padding:calc(var(--u)*1.5) calc(var(--u)*2);
+  font-family:var(--f-mono);font-weight:700;font-size:13px;
+  border-radius:2px;transform:translateY(-200%);
+  transition:transform .2s var(--ease);
+}
+.skip:focus{transform:translateY(0)}
+
+:focus-visible{
+  outline:2px solid var(--datum);
+  outline-offset:3px;
+  border-radius:1px;
+}
+
+a{color:inherit;text-decoration:none}
+
+/* ============================================================
+   実験的ナビ = 左端の座標レール (隙①)
+   スクロール位置を「計測値」として表示。定番ヘッダーに留まらない。
+   ============================================================ */
+.rail{
+  position:fixed;left:0;top:0;bottom:0;width:64px;z-index:100;
+  border-right:1px solid var(--line);
+  background:linear-gradient(90deg, rgba(11,14,20,.9), rgba(11,14,20,.4));
+  backdrop-filter:blur(2px);
+  display:flex;flex-direction:column;align-items:center;
+  padding:calc(var(--u)*2) 0;
+  font-family:var(--f-mono);
+}
+.rail__brand{
+  writing-mode:vertical-rl;
+  font-size:11px;letter-spacing:.28em;color:var(--mute);
+  text-transform:uppercase;font-weight:500;
+}
+.rail__readout{
+  writing-mode:vertical-rl;
+  font-size:12px;font-weight:700;color:var(--datum);
+  letter-spacing:.05em;
+  margin:calc(var(--u)*2) 0;
+  font-variant-numeric:tabular-nums;
+}
+.rail__ticks{
+  flex:1;width:100%;position:relative;
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:calc(var(--u)*2) 0;
+}
+.rail__tick{
+  position:relative;display:flex;align-items:center;justify-content:flex-end;
+  padding-right:10px;height:calc(var(--u)*3);
+  color:var(--mute);cursor:pointer;background:none;border:none;
+  font-family:var(--f-mono);font-size:10px;letter-spacing:.04em;
+  width:100%;transition:color .2s var(--ease);
+}
+.rail__tick::after{
+  content:"";position:absolute;right:0;width:10px;height:1px;
+  background:var(--line);transition:background .2s var(--ease), width .2s var(--ease);
+}
+.rail__tick:hover{color:var(--ink)}
+.rail__tick:hover::after{background:var(--datum);width:16px}
+.rail__tick[aria-current="true"]{color:var(--datum)}
+.rail__tick[aria-current="true"]::after{background:var(--datum);width:20px}
+.rail__progress{
+  position:absolute;right:-1px;top:0;width:2px;background:var(--datum);
+  box-shadow:0 0 8px var(--datum);
+  transition:height .1s linear;
+}
+
+/* ============================================================
+   レイアウト共通
+   ============================================================ */
+main{padding-left:64px}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--gut)}
+
+section{position:relative;padding-block:clamp(72px,12vh,140px)}
+
+/* 図面式セクション見出し (構造=情報。番号は実際の工程順を符号化) */
+.shead{
+  display:flex;align-items:baseline;gap:calc(var(--u)*2);
+  margin-bottom:calc(var(--u)*5);
+  border-bottom:1px solid var(--line);
+  padding-bottom:calc(var(--u)*2);
+  flex-wrap:wrap;
+}
+.shead__no{
+  font-family:var(--f-mono);font-size:13px;font-weight:700;
+  color:var(--datum);letter-spacing:.08em;
+}
+.shead__title{
+  font-family:var(--f-display);font-weight:600;
+  font-size:clamp(22px,3.2vw,34px);line-height:1.1;letter-spacing:-.01em;
+}
+.shead__note{
+  margin-left:auto;font-family:var(--f-mono);font-size:11px;
+  color:var(--mute);letter-spacing:.04em;
+  align-self:center;
+}
+
+/* ============================================================
+   HERO — 動く製図台。会社名が「測られて」構築される。
+   ============================================================ */
+.hero{
+  min-height:100svh;
+  display:flex;flex-direction:column;justify-content:center;
+  position:relative;padding-block:0;
+  border-bottom:1px solid var(--line);
+}
+#draft-canvas{
+  position:absolute;inset:0;width:100%;height:100%;
+  z-index:0;display:block;
+}
+.hero__inner{
+  position:relative;z-index:2;
+  max-width:var(--maxw);margin:0 auto;width:100%;
+  min-width:0; /* flexアイテムのmin-content膨張を防ぎ、子の右はみ出しを解く */
+  padding:0 var(--gut);
+  pointer-events:none; /* キャンバスの計測を妨げない / 子要素で個別有効化 */
+}
+.hero__eyebrow{
+  font-family:var(--f-mono);font-size:13px;color:var(--datum);
+  letter-spacing:.12em;text-transform:uppercase;font-weight:500;
+  margin-bottom:calc(var(--u)*3);
+  display:flex;align-items:center;gap:calc(var(--u)*1.5);
+  flex-wrap:wrap; /* 狭幅で折り返し、min-content膨張を避ける */
+}
+.hero__eyebrow::before{
+  content:"";width:32px;height:1px;background:var(--datum);
+  box-shadow:0 0 6px var(--datum);
+}
+/* 会社名: canvasの構築アニメ完了後にフェードする確定レイヤ */
+.hero__name{
+  font-family:var(--f-display);font-weight:700;
+  font-size:clamp(40px,8.5vw,118px);line-height:.94;
+  letter-spacing:-.02em;color:var(--ink);
+  margin:0;
+  /* 長い和文/英文が右端で裁ち落とされないよう確実に折り返す */
+  overflow-wrap:break-word;word-break:normal;
+}
+.hero__name .en{
+  display:block;font-size:clamp(14px,2.6vw,30px);font-weight:500;
+  color:var(--mute);letter-spacing:.04em;margin-top:calc(var(--u)*2);
+  /* 英字サブは長いのでモバイルで折り返す（buil…切れの解消） */
+  overflow-wrap:break-word;
+}
+.hero__lead{
+  margin-top:calc(var(--u)*4);max-width:42ch;
+  font-size:clamp(15px,1.8vw,19px);color:var(--ink);line-height:1.65;
+}
+.hero__lead b{color:var(--datum);font-weight:600}
+.hero__cta{
+  margin-top:calc(var(--u)*5);display:flex;gap:calc(var(--u)*2);
+  flex-wrap:wrap;pointer-events:auto;
+}
+.btn{
+  font-family:var(--f-mono);font-weight:700;font-size:14px;
+  padding:calc(var(--u)*2) calc(var(--u)*3.5);
+  border-radius:2px;letter-spacing:.02em;
+  display:inline-flex;align-items:center;gap:calc(var(--u)*1.5);
+  transition:transform .18s var(--ease), background .18s var(--ease), color .18s var(--ease);
+  border:1px solid var(--datum);
+}
+.btn--primary{background:var(--datum);color:var(--void)}
+.btn--primary:hover{transform:translateY(-2px)}
+.btn--ghost{background:transparent;color:var(--datum);border-color:var(--line)}
+.btn--ghost:hover{border-color:var(--datum);transform:translateY(-2px)}
+.btn .arrow{transition:transform .18s var(--ease)}
+.btn:hover .arrow{transform:translateX(3px)}
+
+/* 性能の可視化 (隙③) — HUD計器 */
+.hud{
+  position:absolute;right:var(--gut);bottom:calc(var(--u)*4);z-index:3;
+  font-family:var(--f-mono);font-size:11px;color:var(--mute);
+  text-align:right;line-height:1.9;pointer-events:none;
+  letter-spacing:.03em;
+}
+.hud .k{color:var(--mute)}
+.hud .v{color:var(--datum);font-weight:700;font-variant-numeric:tabular-nums}
+.hud .v.warn{color:var(--annot)}
+
+.scroll-hint{
+  position:absolute;left:50%;bottom:calc(var(--u)*3);transform:translateX(-50%);
+  z-index:3;font-family:var(--f-mono);font-size:10px;color:var(--mute);
+  letter-spacing:.18em;text-transform:uppercase;
+  display:flex;flex-direction:column;align-items:center;gap:var(--u);
+}
+.scroll-hint::after{
+  content:"";width:1px;height:28px;background:linear-gradient(var(--datum),transparent);
+  animation:drip 1.8s var(--ease) infinite;
+}
+@keyframes drip{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+/* ============================================================
+   VALUE — 3本の柱。各値が寸法線で「測られて」現れる。
+   ============================================================ */
+.values{display:grid;gap:1px;background:var(--line);
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  border:1px solid var(--line);border-radius:3px;overflow:hidden;}
+.val{background:var(--graph);padding:calc(var(--u)*4);position:relative;
+  transition:background .3s var(--ease);}
+.val:hover{background:#18202b}
+.val__dim{font-family:var(--f-mono);font-size:11px;color:var(--annot);
+  letter-spacing:.04em;margin-bottom:calc(var(--u)*2);
+  display:flex;align-items:center;gap:var(--u);}
+.val__dim::before{content:"";width:18px;height:1px;background:var(--annot)}
+.val__h{font-family:var(--f-display);font-weight:600;font-size:21px;
+  margin-bottom:calc(var(--u)*1.5);line-height:1.25;}
+.val__p{color:var(--mute);font-size:15px;line-height:1.65}
+.val__p b{color:var(--ink);font-weight:500}
+
+/* ============================================================
+   PROCESS — 工程。順序が情報なので番号は正当。
+   AIは非開示: 工程は「測る→引く→締める」で語り、手段を売らない。
+   ============================================================ */
+.proc{display:flex;flex-direction:column;gap:calc(var(--u)*0)}
+.step{
+  display:grid;grid-template-columns:minmax(72px,auto) 1fr;
+  gap:calc(var(--u)*3);align-items:start;
+  padding:calc(var(--u)*4) 0;border-top:1px solid var(--line);
+}
+.step:last-child{border-bottom:1px solid var(--line)}
+.step__no{font-family:var(--f-mono);font-size:13px;font-weight:700;
+  color:var(--datum);letter-spacing:.06em;padding-top:4px;}
+.step__body h3{font-family:var(--f-display);font-weight:600;font-size:clamp(20px,2.6vw,28px);
+  margin-bottom:calc(var(--u)*1.5);line-height:1.15;}
+.step__body p{color:var(--mute);max-width:60ch;font-size:15px}
+.step__body p b{color:var(--ink);font-weight:500}
+.step__tol{font-family:var(--f-mono);font-size:11px;color:var(--annot);
+  margin-top:calc(var(--u)*2);letter-spacing:.03em;}
+
+/* ============================================================
+   WORKS — 実績ファースト。5枠。客観評価を計測値として表示。
+   ============================================================ */
+.works{display:grid;gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:3px;overflow:hidden;}
+.work{
+  background:var(--graph);padding:calc(var(--u)*4);
+  display:grid;grid-template-columns:1fr auto;gap:calc(var(--u)*2);
+  align-items:center;
+  transition:background .25s var(--ease);position:relative;
+}
+.work:hover{background:#18202b}
+.work::before{ /* 左端の計測ノード */
+  content:"";position:absolute;left:0;top:50%;width:3px;height:0;
+  background:var(--datum);transform:translateY(-50%);
+  transition:height .3s var(--ease);box-shadow:0 0 8px var(--datum);
+}
+.work:hover::before{height:60%}
+.work__no{font-family:var(--f-mono);font-size:11px;color:var(--mute);
+  letter-spacing:.04em;margin-bottom:6px;}
+.work__title{font-family:var(--f-display);font-weight:600;
+  font-size:clamp(19px,2.4vw,26px);line-height:1.15;margin-bottom:6px;}
+.work__meta{font-size:13px;color:var(--mute)}
+.work__metrics{display:flex;gap:calc(var(--u)*3);text-align:right;flex-shrink:0}
+.metric{font-family:var(--f-mono)}
+.metric .v{font-size:clamp(18px,2.4vw,24px);font-weight:700;color:var(--datum);
+  font-variant-numeric:tabular-nums;line-height:1;display:block;}
+.metric .l{font-size:10px;color:var(--mute);letter-spacing:.06em;
+  text-transform:uppercase;margin-top:6px;display:block;}
+.metric .v.award{color:var(--annot)}
+.works__foot{margin-top:calc(var(--u)*4)}
+.linkmore{font-family:var(--f-mono);font-size:14px;color:var(--datum);
+  font-weight:700;display:inline-flex;align-items:center;gap:var(--u);
+  border-bottom:1px solid transparent;padding-bottom:2px;transition:border-color .2s;}
+.linkmore:hover{border-color:var(--datum)}
+
+/* ============================================================
+   CONTACT — 余白と自信でクローズ。
+   ============================================================ */
+.contact{border-top:1px solid var(--line)}
+.contact__inner{display:grid;grid-template-columns:1.2fr .8fr;gap:calc(var(--u)*6);
+  align-items:end;}
+.contact__h{font-family:var(--f-display);font-weight:700;
+  font-size:clamp(32px,6vw,72px);line-height:1.0;letter-spacing:-.02em;}
+.contact__h .datum{color:var(--datum)}
+.contact__p{color:var(--mute);margin-top:calc(var(--u)*3);max-width:38ch;font-size:16px}
+.contact__side{font-family:var(--f-mono);font-size:13px;color:var(--mute);
+  line-height:2.1;}
+.contact__side .row{display:flex;justify-content:space-between;
+  border-bottom:1px solid var(--line);padding:calc(var(--u)*1.5) 0;}
+.contact__side .row span:last-child{color:var(--ink)}
+.contact__cta{margin-top:calc(var(--u)*5)}
+
+/* ============================================================
+   FOOTER — 表題欄 (図面のtitle block)。熱量を最下層まで持続。
+   ============================================================ */
+.titleblock{
+  border-top:1px solid var(--datum);
+  background:var(--graph);
+  margin-left:64px;
+}
+.titleblock__grid{
+  max-width:var(--maxw);margin:0 auto;padding:calc(var(--u)*3) var(--gut);
+  display:grid;grid-template-columns:2fr 1fr 1fr 1fr;
+  font-family:var(--f-mono);font-size:11px;
+  border-left:1px solid var(--line);
+}
+.tb{border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+  border-top:1px solid var(--line);padding:calc(var(--u)*2);}
+.tb .l{color:var(--mute);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+  display:block;margin-bottom:6px;}
+.tb .v{color:var(--ink);font-size:13px;font-weight:500}
+.tb .v.datum{color:var(--datum)}
+.titleblock__base{max-width:var(--maxw);margin:0 auto;padding:calc(var(--u)*2) var(--gut);
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--u);
+  font-family:var(--f-mono);font-size:11px;color:var(--mute);}
+
+/* ============================================================
+   スクロール構築リビール (全要素を測ってから引く)
+   reduced-motion時は即・全表示=情報欠落ゼロ
+   ============================================================ */
+.reveal{opacity:0;transform:translateY(16px);
+  transition:opacity .6s var(--ease), transform .6s var(--ease);}
+.reveal.in{opacity:1;transform:none}
+.reveal[data-d="1"]{transition-delay:.08s}
+.reveal[data-d="2"]{transition-delay:.16s}
+.reveal[data-d="3"]{transition-delay:.24s}
+.reveal[data-d="4"]{transition-delay:.32s}
+
+@media (prefers-reduced-motion: reduce){
+  /* 全モーションを確実に停止（ワイルドカードで漏れゼロ）。
+     X/Z案と同方式。最終状態は下で個別固定して情報欠落を防ぐ。 */
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+    scroll-behavior:auto !important;
+  }
+  /* 最終状態の固定（演出停止後も見える状態を保証） */
+  .reveal{opacity:1 !important;transform:none !important}
+  .scroll-hint::after{animation:none !important;transform:scaleY(1) !important}
+  .rail__progress{transition:none !important}
+}
+
+/* ============================================================
+   レスポンシブ
+   ============================================================ */
+@media (max-width: 860px){
+  .rail{width:44px}
+  main{padding-left:44px}
+  .titleblock{margin-left:44px}
+  .rail__ticks{display:none}
+  .contact__inner{grid-template-columns:1fr;gap:calc(var(--u)*4)}
+  .titleblock__grid{grid-template-columns:1fr 1fr}
+  .work{grid-template-columns:1fr;align-items:start}
+  .work__metrics{justify-content:flex-start}
+  .hud{display:none}
+}
+@media (max-width: 520px){
+  .titleblock__grid{grid-template-columns:1fr}
+  .hero__cta{flex-direction:column;align-items:stretch}
+  .btn{justify-content:center}
+  /* モバイル右切れ対策（要改善・基準C段差ゼロ）:
+     英字サブは長いので明示的に小さく＋折り返し、本文も幅内に収める。
+     overflow-x:hidden で「隠す」のでなく、収まるよう「解く」。 */
+  .hero__name .en{font-size:12px;letter-spacing:.01em;line-height:1.5}
+  .hero__lead{font-size:15px;max-width:none}
+  .hero__lead br{display:none} /* 強制改行を解いて自然折り返しに任せる */
+}
+/* 360〜520px: 主見出しと英字サブが画面幅で確実に収まるよう寸法を締める。
+   gut を縮めて左余白を抑え、長い英字サブが右端で切れないようにする。 */
+@media (max-width: 480px){
+  :root{ --gut:16px; }
+  .hero__name{ font-size:clamp(34px,12.5vw,52px); }
+  .hero__name .en{ font-size:11px; }
+}
+
+/* noscript: canvasが無くても会社名は読める */
+.noscript-name{position:relative;z-index:2}
+</style>
+</head>
+<body>
+
+<a class="skip" href="#main">本文へスキップ</a>
+
+<!-- ============ 実験的ナビ: 座標レール (隙①) ============ -->
+<nav class="rail" aria-label="セクションナビゲーション（座標レール）">
+  <span class="rail__brand">CLAUDE CODE CO.</span>
+  <span class="rail__readout" id="rail-readout" aria-hidden="true">Y:0000</span>
+  <div class="rail__ticks">
+    <button class="rail__tick" data-target="#hero"    aria-label="00 トップへ"><span aria-hidden="true">00</span></button>
+    <button class="rail__tick" data-target="#value"   aria-label="01 提供価値へ"><span aria-hidden="true">01</span></button>
+    <button class="rail__tick" data-target="#process" aria-label="02 制作プロセスへ"><span aria-hidden="true">02</span></button>
+    <button class="rail__tick" data-target="#works"   aria-label="03 実績へ"><span aria-hidden="true">03</span></button>
+    <button class="rail__tick" data-target="#contact" aria-label="04 お問い合わせへ"><span aria-hidden="true">04</span></button>
+    <div class="rail__progress" id="rail-progress" aria-hidden="true"></div>
+  </div>
+</nav>
+
+<main id="main">
+
+  <!-- ==================== HERO ==================== -->
+  <header class="hero" id="hero">
+    <canvas id="draft-canvas" aria-hidden="true"></canvas>
+    <div class="hero__inner">
+      <p class="hero__eyebrow">Web制作プロダクション / 動く設計図</p>
+      <h1 class="hero__name noscript-name">
+        クロードコード<br>カンパニー
+        <span class="en">CLAUDE CODE COMPANY — design &amp; build studio</span>
+      </h1>
+      <p class="hero__lead">
+        最初の一画面で実力を証明し、最後の一画面まで精度を落とさない。<br>
+        この見出しは、<b>基準線が測り、線が引かれて</b>たった今つくられました。
+      </p>
+      <div class="hero__cta">
+        <a class="btn btn--primary" href="#contact">相談する <span class="arrow">→</span></a>
+        <a class="btn btn--ghost" href="#works">実績を見る <span class="arrow">→</span></a>
+      </div>
+    </div>
+
+    <!-- 性能の可視化 (隙③) -->
+    <div class="hud" aria-hidden="true">
+      <div><span class="k">RENDER</span> <span class="v" id="hud-fps">— fps</span></div>
+      <div><span class="k">NODES</span> <span class="v" id="hud-nodes">0</span></div>
+      <div><span class="k">JS</span> <span class="v">0 kb · no framework</span></div>
+    </div>
+
+    <div class="scroll-hint" aria-hidden="true">SCROLL</div>
+  </header>
+
+  <!-- ==================== VALUE ==================== -->
+  <section id="value" aria-labelledby="value-h">
+    <div class="wrap">
+      <div class="shead reveal">
+        <span class="shead__no">01</span>
+        <h2 class="shead__title" id="value-h">測れるものだけ、約束する</h2>
+        <span class="shead__note">SPEC / 3 PILLARS</span>
+      </div>
+
+      <div class="values">
+        <div class="val reveal" data-d="1">
+          <p class="val__dim">±0.0 / 第一画面</p>
+          <h3 class="val__h">3秒で手が止まる掴み</h3>
+          <p class="val__p">開いた瞬間に「ただ者でない」を立てる。<b>飾りではなく、技術そのものを掴みにする</b>。意味のない演出は一つも置かない。</p>
+        </div>
+        <div class="val reveal" data-d="2">
+          <p class="val__dim">±0.0 / 全行程</p>
+          <h3 class="val__h">最下層まで段差ゼロ</h3>
+          <p class="val__p">ヒーローの精度を、フォーカス状態・空データ・モバイルの隅まで落とさない。<b>見えないところにこそ格が出る</b>。</p>
+        </div>
+        <div class="val reveal" data-d="3">
+          <p class="val__dim">±0.0 / 体感速度</p>
+          <h3 class="val__h">重くせず、攻める</h3>
+          <p class="val__p">この画面の動きはフレームワーク0kb・素のCanvasで60fpsを狙う。<b>軽さは品質の証拠</b>。数値で見せる主義。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== PROCESS (AI非開示) ==================== -->
+  <section id="process" aria-labelledby="process-h">
+    <div class="wrap">
+      <div class="shead reveal">
+        <span class="shead__no">02</span>
+        <h2 class="shead__title" id="process-h">測る、引く、締める</h2>
+        <span class="shead__note">PROCESS / 3 PHASES</span>
+      </div>
+
+      <div class="proc">
+        <article class="step reveal" data-d="1">
+          <div class="step__no">PH.01</div>
+          <div class="step__body">
+            <h3>測る — 誰に、何を、なぜ</h3>
+            <p>つくる前に、ターゲットとゴールを基準線として引く。<b>装飾の前に意図を確定させる</b>。外さないための寸法どり。</p>
+            <p class="step__tol">TOLERANCE: 目的のない要素は、ここで全て弾く</p>
+          </div>
+        </article>
+        <article class="step reveal" data-d="2">
+          <div class="step__no">PH.02</div>
+          <div class="step__body">
+            <h3>引く — 3案で方向を散らす</h3>
+            <p>毎案件、方向の違う3案を立てて最適解を競わせる。<b>似た案は内部で差し戻す</b>。混ぜて使える余地を残して提案する。</p>
+            <p class="step__tol">TOLERANCE: 既視感・テンプレ臭は、線にしない</p>
+          </div>
+        </article>
+        <article class="step reveal" data-d="3">
+          <div class="step__no">PH.03</div>
+          <div class="step__body">
+            <h3>締める — 品質で証明する</h3>
+            <p>コントラスト・キーボード到達・性能を数値で検査してから納める。<b>口頭の品質保証は信じない、実機で出す</b>。</p>
+            <p class="step__tol">TOLERANCE: AA 4.5:1 未満・reduced-motion未対応は、出荷しない</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== WORKS (実績ファースト) ==================== -->
+  <section id="works" aria-labelledby="works-h">
+    <div class="wrap">
+      <div class="shead reveal">
+        <span class="shead__no">03</span>
+        <h2 class="shead__title" id="works-h">引いた線は、数字で残る</h2>
+        <span class="shead__note">WORKS / 5 SELECTED</span>
+      </div>
+
+      <div class="works">
+        <article class="work reveal" data-d="1">
+          <div>
+            <div class="work__no">W—001 / 2026</div>
+            <h3 class="work__title">精密機器メーカー コーポレートサイト</h3>
+            <p class="work__meta">設計・実装・性能設計 / B2B</p>
+          </div>
+          <div class="work__metrics">
+            <div class="metric"><span class="v">99</span><span class="l">Perf</span></div>
+            <div class="metric"><span class="v">+38%</span><span class="l">問合せ</span></div>
+            <div class="metric"><span class="v award">SOTD</span><span class="l">受賞</span></div>
+          </div>
+        </article>
+
+        <article class="work reveal" data-d="1">
+          <div>
+            <div class="work__no">W—002 / 2025</div>
+            <h3 class="work__title">SaaSスタートアップ ブランドLP</h3>
+            <p class="work__meta">戦略・コピー・実装 / SaaS</p>
+          </div>
+          <div class="work__metrics">
+            <div class="metric"><span class="v">100</span><span class="l">A11y</span></div>
+            <div class="metric"><span class="v">2.1×</span><span class="l">CVR</span></div>
+            <div class="metric"><span class="v">0.8s</span><span class="l">LCP</span></div>
+          </div>
+        </article>
+
+        <article class="work reveal" data-d="2">
+          <div>
+            <div class="work__no">W—003 / 2025</div>
+            <h3 class="work__title">老舗ブランド リブランディング</h3>
+            <p class="work__meta">ブランド設計・サイト一式 / 製造</p>
+          </div>
+          <div class="work__metrics">
+            <div class="metric"><span class="v">98</span><span class="l">Perf</span></div>
+            <div class="metric"><span class="v">×3.4</span><span class="l">滞在</span></div>
+            <div class="metric"><span class="v award">FWA</span><span class="l">受賞</span></div>
+          </div>
+        </article>
+
+        <article class="work reveal" data-d="2">
+          <div>
+            <div class="work__no">W—004 / 2024</div>
+            <h3 class="work__title">文化施設 ビジュアルアーカイブ</h3>
+            <p class="work__meta">UX設計・WebGL実装 / 公共</p>
+          </div>
+          <div class="work__metrics">
+            <div class="metric"><span class="v">96</span><span class="l">Perf</span></div>
+            <div class="metric"><span class="v">60</span><span class="l">fps</span></div>
+            <div class="metric"><span class="v">12k</span><span class="l">MAU</span></div>
+          </div>
+        </article>
+
+        <article class="work reveal" data-d="3">
+          <div>
+            <div class="work__no">W—005 / 2024</div>
+            <h3 class="work__title">D2C コスメ 立ち上げEC</h3>
+            <p class="work__meta">設計・実装・運用設計 / D2C</p>
+          </div>
+          <div class="work__metrics">
+            <div class="metric"><span class="v">99</span><span class="l">Perf</span></div>
+            <div class="metric"><span class="v">+52%</span><span class="l">売上</span></div>
+            <div class="metric"><span class="v">0.6s</span><span class="l">LCP</span></div>
+          </div>
+        </article>
+      </div>
+
+      <div class="works__foot reveal">
+        <a class="linkmore" href="#contact">すべての実績を見る <span aria-hidden="true">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== CONTACT ==================== -->
+  <section id="contact" class="contact" aria-labelledby="contact-h">
+    <div class="wrap">
+      <div class="contact__inner">
+        <div class="reveal">
+          <h2 class="contact__h" id="contact-h">まず、<span class="datum">一度</span><br>測らせてください。</h2>
+          <p class="contact__p">課題の寸法どりから始めます。売り込みはしません。3案を見て、方向を決めるところから。</p>
+          <div class="contact__cta">
+            <a class="btn btn--primary" href="mailto:hello@claudecode.co">相談する <span class="arrow">→</span></a>
+          </div>
+        </div>
+        <div class="contact__side reveal" data-d="1">
+          <div class="row"><span>CONTACT</span><span>hello@claudecode.co</span></div>
+          <div class="row"><span>RESPONSE</span><span>1 営業日以内</span></div>
+          <div class="row"><span>SCOPE</span><span>設計 — 実装 — 運用</span></div>
+          <div class="row"><span>STACK</span><span>素の精度 / no bloat</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ==================== FOOTER = 表題欄 ==================== -->
+<footer class="titleblock">
+  <div class="titleblock__grid">
+    <div class="tb">
+      <span class="l">Project / Drawing</span>
+      <span class="v datum">クロードコードカンパニー — 自社サイト</span>
+    </div>
+    <div class="tb">
+      <span class="l">Scale</span>
+      <span class="v">1 : 1（実寸）</span>
+    </div>
+    <div class="tb">
+      <span class="l">Sheet</span>
+      <span class="v">01 / 01</span>
+    </div>
+    <div class="tb">
+      <span class="l">Rev</span>
+      <span class="v">Y — rai</span>
+    </div>
+  </div>
+  <div class="titleblock__base">
+    <span>© 2026 CLAUDE CODE COMPANY</span>
+    <span>DRAWN &amp; BUILT WITH MEASURED PRECISION</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ========================================================
+     1) HERO: 動く製図台 (Canvas)
+     基準線が走査 → 計測 → グリッドが弾性変形。
+     reduced-motion時は「完成済みの静的設計図」を1枚描いて止める。
+     ======================================================== */
+  var canvas = document.getElementById("draft-canvas");
+  var hud_fps = document.getElementById("hud-fps");
+  var hud_nodes = document.getElementById("hud-nodes");
+  if (canvas && canvas.getContext){
+    var ctx = canvas.getContext("2d");
+    var W=0,H=0,DPR=1;
+    var mouse = {x:-9999,y:-9999, active:false};
+    var GRID = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--u"))*5 || 40;
+
+    function resize(){
+      DPR = Math.min(window.devicePixelRatio||1, 2); // 2倍上限=軽さ優先
+      var r = canvas.getBoundingClientRect();
+      W = r.width; H = r.height;
+      canvas.width = Math.round(W*DPR);
+      canvas.height = Math.round(H*DPR);
+      ctx.setTransform(DPR,0,0,DPR,0,0);
+    }
+    resize();
+    window.addEventListener("resize", resize);
+
+    // 計器パレット
+    var C_GRID="#1d2733", C_GRID2="#161e29", C_DATUM="#3DD6C4", C_ANNOT="#F2A93B", C_MUTE="#828E9E";
+
+    // --- 弾性グリッドの節点 (性能可視化の "NODES") ---
+    var cols, rows, nodes=[];
+    function buildNodes(){
+      nodes.length=0;
+      cols = Math.ceil(W/GRID)+2;
+      rows = Math.ceil(H/GRID)+2;
+      for(var j=0;j<rows;j++){
+        for(var i=0;i<cols;i++){
+          nodes.push({ ox:i*GRID, oy:j*GRID, x:i*GRID, y:j*GRID });
+        }
+      }
+      if(hud_nodes) hud_nodes.textContent = nodes.length.toLocaleString();
+    }
+    buildNodes();
+    window.addEventListener("resize", buildNodes);
+
+    // 物理が収束したか（全節点が原点近傍に戻ったか）を判定するための残差。
+    // しきい値以下なら「静止＝再描画不要」と見なしループを止められる。
+    var SETTLE_EPS = 0.05;        // px。これ未満の動きは目に見えない
+    function drawGrid(){
+      // 弾性: カーソル近傍の節点をわずかに押しのける=「生きた製図台」
+      var infl=140, push=18, maxMove=0;
+      for(var k=0;k<nodes.length;k++){
+        var n=nodes[k];
+        var px=n.x, py=n.y;
+        if(mouse.active){
+          var dx=n.ox-mouse.x, dy=n.oy-mouse.y;
+          var d=Math.sqrt(dx*dx+dy*dy);
+          if(d<infl && d>0.01){
+            var f=(1-d/infl)*push;
+            n.x += ((n.ox+dx/d*f)-n.x)*0.18;
+            n.y += ((n.oy+dy/d*f)-n.y)*0.18;
+          } else {
+            n.x += (n.ox-n.x)*0.12;
+            n.y += (n.oy-n.y)*0.12;
+          }
+        } else {
+          n.x += (n.ox-n.x)*0.12;
+          n.y += (n.oy-n.y)*0.12;
+        }
+        // この節点が今フレームで動いた量の最大値を追跡
+        var mv=Math.abs(n.x-px)+Math.abs(n.y-py);
+        if(mv>maxMove) maxMove=mv;
+      }
+      gridMoving = maxMove > SETTLE_EPS;
+      // 横線
+      ctx.lineWidth=1;
+      for(var j=0;j<rows;j++){
+        ctx.beginPath();
+        ctx.strokeStyle = (j%5===0)? C_GRID : C_GRID2;
+        for(var i=0;i<cols;i++){
+          var n2=nodes[j*cols+i];
+          if(i===0) ctx.moveTo(n2.x,n2.y); else ctx.lineTo(n2.x,n2.y);
+        }
+        ctx.stroke();
+      }
+      // 縦線
+      for(var i2=0;i2<cols;i2++){
+        ctx.beginPath();
+        ctx.strokeStyle = (i2%5===0)? C_GRID : C_GRID2;
+        for(var j2=0;j2<rows;j2++){
+          var n3=nodes[j2*cols+i2];
+          if(j2===0) ctx.moveTo(n3.x,n3.y); else ctx.lineTo(n3.x,n3.y);
+        }
+        ctx.stroke();
+      }
+    }
+
+    // --- 構築アニメ: 寸法線が走査し、ターゲット枠を「測る」 ---
+    // 会社名タイポはHTML側(.hero__name)が確定レイヤ。canvasは“測る行為”を担う。
+    // （t0 / INTRO はループ制御ブロックで宣言）
+    function easeOut(p){return 1-Math.pow(1-p,3);}
+
+    function drawDatumScan(p){
+      // p:0→1 で水平・垂直の基準線が画面を走査
+      var nameBox = getNameBox();
+      // 走査線（縦）
+      var sx = easeOut(Math.min(p*1.2,1)) * W;
+      ctx.save();
+      ctx.strokeStyle=C_DATUM; ctx.lineWidth=1;
+      ctx.globalAlpha=0.9;
+      ctx.beginPath(); ctx.moveTo(sx,0); ctx.lineTo(sx,H); ctx.stroke();
+      // 走査線（横）
+      var sy = easeOut(Math.min(p*1.2,1)) * H;
+      ctx.beginPath(); ctx.moveTo(0,sy); ctx.lineTo(W,sy); ctx.stroke();
+      // 交点ノード
+      ctx.fillStyle=C_DATUM;
+      ctx.fillRect(sx-2,sy-2,4,4);
+      ctx.restore();
+
+      // 後半: 会社名ボックスを寸法線で測る
+      if(p>0.5 && nameBox){
+        var q=easeOut((p-0.5)/0.5);
+        ctx.save();
+        ctx.globalAlpha = q;
+        ctx.strokeStyle=C_ANNOT; ctx.lineWidth=1;
+        ctx.setLineDash([4,4]);
+        // 枠
+        ctx.strokeRect(nameBox.x, nameBox.y, nameBox.w*q, nameBox.h);
+        ctx.setLineDash([]);
+        // 寸法線（上辺）＋矢羽＋数値
+        var dimY = nameBox.y-14;
+        ctx.beginPath();
+        ctx.moveTo(nameBox.x, dimY); ctx.lineTo(nameBox.x+nameBox.w*q, dimY);
+        ctx.stroke();
+        arrow(ctx,nameBox.x,dimY,1); arrow(ctx,nameBox.x+nameBox.w*q,dimY,-1);
+        ctx.fillStyle=C_ANNOT;
+        ctx.font='11px "JetBrains Mono", monospace';
+        ctx.fillText(Math.round(nameBox.w*q)+" px", nameBox.x+nameBox.w*q/2-18, dimY-6);
+        ctx.restore();
+      }
+    }
+    function arrow(c,x,y,dir){
+      c.beginPath();
+      c.moveTo(x,y); c.lineTo(x+dir*6,y-3); c.moveTo(x,y); c.lineTo(x+dir*6,y+3);
+      c.stroke();
+    }
+    function getNameBox(){
+      var el=document.querySelector(".hero__name");
+      var host=document.querySelector(".hero");
+      if(!el||!host) return null;
+      var er=el.getBoundingClientRect(), hr=host.getBoundingClientRect();
+      return { x:er.left-hr.left, y:er.top-hr.top, w:er.width, h:er.height };
+    }
+
+    // --- FPS計測 (隙③: 性能を実数で開示) ---
+    var frames=0, fAcc=0, lastFpsT=performance.now();
+    function tickFps(now){
+      frames++; fAcc=now;
+      if(now-lastFpsT>=500){
+        var fps=Math.round(frames*1000/(now-lastFpsT));
+        if(hud_fps){
+          hud_fps.textContent = fps+" fps";
+          hud_fps.classList.toggle("warn", fps<50);
+        }
+        frames=0; lastFpsT=now;
+      }
+    }
+
+    // --- 省エネ・ループ制御 -------------------------------------------------
+    // 永久ループを廃止。描画が必要なときだけ rAF を回し、
+    //   (1) イントロ完了 (2) 物理が収束 (3) マウス非アクティブ
+    // が揃ったら自動停止する。pointermove / pointerenter / resize で再起動。
+    // タブ非表示(visibilitychange)では確実に停止する。
+    var rafId=null;        // 走行中の rAF ハンドル（null=停止中）
+    var t0=null;           // イントロ起点
+    var gridMoving=false;  // drawGrid が「まだ動いている」と判定したか
+    var INTRO=2200;        // ms
+
+    function needsFrame(now){
+      // 次フレームを描く必要があるか
+      if(t0!==null && (now - t0) < INTRO) return true; // イントロ進行中
+      if(mouse.active) return true;                     // カーソル追従中
+      if(gridMoving) return true;                       // 復元バネが収束途中
+      return false;
+    }
+
+    function frame(now){
+      if(t0===null) t0=now;
+      ctx.clearRect(0,0,W,H);
+      drawGrid(); // 副作用で gridMoving を更新
+      var p=Math.min((now-t0)/INTRO,1);
+      if(p<1) drawDatumScan(p);
+      else if(mouse.active) drawCrosshair(); // 構築完了後はクロスヘアのみ
+      tickFps(now);
+
+      if(needsFrame(now)){
+        rafId=requestAnimationFrame(frame);
+      } else {
+        // 静止に達した → ループ停止。HUDも「idle」にして停止を正直に示す。
+        rafId=null;
+        if(hud_fps){ hud_fps.textContent="idle"; hud_fps.classList.remove("warn"); }
+      }
+    }
+
+    function startLoop(){
+      if(reduce) return;                 // reduced-motion時は回さない
+      if(document.hidden) return;        // 非表示タブでは回さない
+      if(rafId!==null) return;           // 既に走行中
+      lastFpsT=performance.now(); frames=0;
+      rafId=requestAnimationFrame(frame);
+    }
+    function stopLoop(){
+      if(rafId!==null){ cancelAnimationFrame(rafId); rafId=null; }
+    }
+
+    function drawCrosshair(){
+      ctx.save();
+      ctx.strokeStyle=C_DATUM; ctx.globalAlpha=0.5; ctx.lineWidth=1;
+      ctx.setLineDash([2,5]);
+      ctx.beginPath();
+      ctx.moveTo(mouse.x,0); ctx.lineTo(mouse.x,H);
+      ctx.moveTo(0,mouse.y); ctx.lineTo(W,mouse.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle=C_DATUM; ctx.globalAlpha=0.9;
+      ctx.font='10px "JetBrains Mono", monospace';
+      ctx.fillText("X:"+Math.round(mouse.x)+" Y:"+Math.round(mouse.y), mouse.x+10, mouse.y-8);
+      ctx.restore();
+    }
+
+    // 静的フォールバック (reduced-motion): 完成済みの設計図を1枚
+    function drawStatic(){
+      ctx.clearRect(0,0,W,H);
+      drawGrid();
+      var nb=getNameBox();
+      if(nb){
+        ctx.save();
+        ctx.strokeStyle=C_ANNOT; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+        ctx.strokeRect(nb.x,nb.y,nb.w,nb.h);
+        ctx.setLineDash([]);
+        var dimY=nb.y-14;
+        ctx.beginPath(); ctx.moveTo(nb.x,dimY); ctx.lineTo(nb.x+nb.w,dimY); ctx.stroke();
+        arrow(ctx,nb.x,dimY,1); arrow(ctx,nb.x+nb.w,dimY,-1);
+        ctx.fillStyle=C_ANNOT; ctx.font='11px "JetBrains Mono", monospace';
+        ctx.fillText(Math.round(nb.w)+" px", nb.x+nb.w/2-18, dimY-6);
+        ctx.restore();
+      }
+      if(hud_fps) hud_fps.textContent="static";
+    }
+
+    // ポインタ (細かい: モバイルのtouchでは弾性を切り軽くする)
+    // マウスが動いたら省エネ停止していたループを起こす。
+    var hero=document.querySelector(".hero");
+    if(!reduce && window.matchMedia("(pointer:fine)").matches){
+      hero.addEventListener("mousemove", function(e){
+        var r=hero.getBoundingClientRect();
+        mouse.x=e.clientX-r.left; mouse.y=e.clientY-r.top; mouse.active=true;
+        startLoop(); // 停止中なら再起動（収束後の追従描画のため）
+      });
+      hero.addEventListener("mouseleave", function(){
+        mouse.active=false;
+        startLoop(); // 残った押しのけを原点へ収束させてから自動停止させる
+      });
+    }
+
+    if(reduce){
+      // 動かさない。完成図を描いて固定。リサイズ時のみ再描画。
+      requestAnimationFrame(function(){ resize(); buildNodes(); drawStatic(); });
+      window.addEventListener("resize", function(){ resize(); buildNodes(); drawStatic(); });
+    } else {
+      // リサイズ時は寸法が変わるので一度起こして再構成（再描画→自動停止）。
+      window.addEventListener("resize", function(){ gridMoving=true; startLoop(); });
+      // タブ非表示で確実に停止、再表示で必要時のみ再開（バッテリ/CPU節約）。
+      document.addEventListener("visibilitychange", function(){
+        if(document.hidden){
+          stopLoop();
+        } else {
+          // 復帰時、追従中か未収束なら回す。完全静止中はそのまま止めておく。
+          if(mouse.active || gridMoving) startLoop();
+        }
+      });
+      startLoop(); // 初回イントロ開始
+    }
+  }
+
+  /* ========================================================
+     2) スクロール構築リビール (IntersectionObserver)
+     ======================================================== */
+  if(!reduce && "IntersectionObserver" in window){
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){ en.target.classList.add("in"); io.unobserve(en.target); }
+      });
+    },{threshold:0.15, rootMargin:"0px 0px -8% 0px"});
+    document.querySelectorAll(".reveal").forEach(function(el){ io.observe(el); });
+  } else {
+    document.querySelectorAll(".reveal").forEach(function(el){ el.classList.add("in"); });
+  }
+
+  /* ========================================================
+     3) 座標レール: スクロール位置を計測値として表示 + 現在地
+        (隙① 実験的ナビ)
+     ======================================================== */
+  var readout=document.getElementById("rail-readout");
+  var progress=document.getElementById("rail-progress");
+  var ticks=Array.prototype.slice.call(document.querySelectorAll(".rail__tick"));
+  var sections=ticks.map(function(t){ return document.querySelector(t.dataset.target); });
+
+  ticks.forEach(function(t){
+    t.addEventListener("click", function(){
+      var tgt=document.querySelector(t.dataset.target);
+      if(tgt) tgt.scrollIntoView({behavior: reduce?"auto":"smooth", block:"start"});
+    });
+  });
+
+  var ticking=false;
+  function onScroll(){
+    if(ticking) return; ticking=true;
+    requestAnimationFrame(function(){
+      var sc=window.scrollY||window.pageYOffset;
+      var doc=document.documentElement.scrollHeight-window.innerHeight;
+      var pct=doc>0? sc/doc : 0;
+      // 「測定値」風の表示 (総延長を mm 見立てで)
+      var total=3800;
+      if(readout) readout.textContent="Y:"+String(Math.round(pct*total)).padStart(4,"0");
+      if(progress) progress.style.height=(pct*100)+"%";
+      // 現在セクション
+      var cur=0, vh=window.innerHeight*0.4;
+      for(var i=0;i<sections.length;i++){
+        if(sections[i] && sections[i].getBoundingClientRect().top<=vh) cur=i;
+      }
+      ticks.forEach(function(t,i){ t.setAttribute("aria-current", i===cur ? "true":"false"); });
+      ticking=false;
+    });
+  }
+  window.addEventListener("scroll", onScroll, {passive:true});
+  onScroll();
+
+})();
+</script>
+</body>
+</html>

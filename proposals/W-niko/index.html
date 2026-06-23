@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>クロードコードカンパニー — 触って、確かめてください。</title>
+<meta name="description" content="最初の一画面で実力を証明し、最後の一画面まで精度を落とさない。遊べるのに、作りは超精密。触って確かめられるWeb制作スタジオ。">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#F3EFE6">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Display: Fraunces（光学サイズ可変・人懐っこいが知的なセリフ） / Body: Zen Kaku Gothic New（JP整合・社の標準） / Utility: Space Mono（おもちゃのタイプライターの声＝ラベル/数値） -->
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,900&family=Space+Mono:wght@400;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   クロードコードカンパニー — 案W / 遊び心の頂点（ニコ）
+   核：最初の一画面で実力を証明し、最後の一画面まで精度を落とさない。
+   仮想敵：Cuberto（遊びと忠実さ）／ Active Theory（体験の派手さ）／
+          Lusion（物理wow）。
+   コンセプト：触ると、たわむ。離すと、ぴたり揃う。
+   署名：会社名は「活字ブロック」でできていて、つかんで放り投げられる。
+        だが各ブロックには 0.1px 単位の定位置があり、臨界制動で必ず戻る。
+        ＝"遊べるのに、作りが超精密" を一画面で触らせて証明する。
+        遊び＝飾りではなく、制作会社の実力の物的証拠。
+   ============================================================ */
+
+:root{
+  /* --- 色：温かいチョーク地に、墨と「遊び」の一点。AIデフォルト臭(メッシュ/多色ネオン)を踏まない --- */
+  --paper:   #F3EFE6;  /* 温かいチョーク白（クリーム"デフォルト"より明るく、わずかに暖色） */
+  --paper-2: #ECE7DB;  /* 沈めた面 */
+  --tile:    #FBF8F1;  /* 活字ブロックの面（持ち上がった紙） */
+  --ink:     #16130F;  /* 墨（暖黒）— 見出し（対 paper 約14:1） */
+  --ink-2:   #46403A;  /* 本文（対 paper 約8:1） */
+  --ink-3:   #6A6358;  /* 補助・キャプション（対 paper 約4.6:1, AA） */
+  --line:    #D9D2C4;  /* 罫（非文字） */
+  --line-2:  #E4DECF;  /* 淡い罫（非文字） */
+
+  --play:    #E23A1E;  /* 遊びの火花＝バーミリオン。塗り/装飾の図形要素にのみ使用（対 paper 3.8:1=UI/large可） */
+  --play-d:  #C12E14;  /* ボタン地・押下（白文字で4.99:1=AA, fill hover） */
+  --play-ink:#B12810;  /* 文字・小ラベルの遊び色（対 paper 5.75:1, 対 tile 6.23:1 = AA本文可） */
+  --cobalt:  #1F46E0;  /* 精密の信号＝電光ブルー（対 paper 約6.3:1, AA） */
+
+  --shadow:  18px 18px 0 rgba(22,19,15,.92);  /* 活版ブロックの実体影（ぼかさない＝端正） */
+  --shadow-s: 6px 6px 0 rgba(22,19,15,.9);
+
+  /* --- 字 --- */
+  --disp: 'Fraunces', 'Hiragino Mincho ProN', serif;
+  --body: 'Zen Kaku Gothic New', system-ui, -apple-system, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+  --mono: 'Space Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  /* --- 8px ベースライン格子：遊んでも、寸法は規律。核の物的証拠 --- */
+  --u: 8px;
+  --gut: clamp(20px, 5.5vw, 80px);
+  --maxw: 1280px;
+  --ease: cubic-bezier(.2,.8,.2,1);
+  --ease-back: cubic-bezier(.34,1.56,.64,1); /* おもちゃっぽい弾み（控えめに使う） */
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} }
+
+body{
+  background:var(--paper);
+  color:var(--ink-2);
+  font-family:var(--body);
+  font-size:16px;
+  line-height:1.75;
+  letter-spacing:.01em;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+  /* 方眼ノートの淡い罫＝"設計図の上で遊んでいる"地。多色グラデは使わない */
+  background-image:
+    linear-gradient(var(--line-2) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-2) 1px, transparent 1px);
+  background-size: calc(var(--u)*4) calc(var(--u)*4);
+}
+
+::selection{background:var(--play);color:var(--paper)}
+
+/* --- a11y 土台 --- */
+.skip{
+  position:absolute;left:var(--u);top:var(--u);z-index:300;
+  background:var(--ink);color:var(--paper);
+  padding:calc(var(--u)*1.5) calc(var(--u)*2);
+  font-family:var(--mono);font-weight:700;font-size:13px;
+  border-radius:4px;transform:translateY(-200%);
+  transition:transform .2s var(--ease);
+}
+.skip:focus{transform:translateY(0)}
+
+:focus-visible{
+  outline:3px solid var(--cobalt);
+  outline-offset:3px;
+  border-radius:3px;
+}
+
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:none}
+
+/* ============================================================
+   実験的ナビ（隙①）= 上端の「点字ドット」スライダー
+   定番ヘッダーに留まらない。現在地を物理ドットで示し、押すと弾む。
+   ============================================================ */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:calc(var(--u)*2) var(--gut);
+  background:linear-gradient(var(--paper) 60%, transparent);
+  pointer-events:none;
+}
+.nav__brand{
+  pointer-events:auto;
+  font-family:var(--mono);font-weight:700;font-size:13px;
+  letter-spacing:.04em;color:var(--ink);
+  display:inline-flex;align-items:center;gap:calc(var(--u)*1.25);
+}
+.nav__dot{width:11px;height:11px;border-radius:50%;background:var(--play);
+  box-shadow:2px 2px 0 var(--ink);}
+.nav__dots{
+  pointer-events:auto;display:flex;gap:calc(var(--u)*1.5);align-items:center;
+}
+.nav__pip{
+  width:13px;height:13px;border-radius:50%;
+  border:2px solid var(--ink);background:transparent;
+  transition:transform .25s var(--ease-back), background .2s var(--ease);
+  position:relative;
+}
+.nav__pip::after{ /* ツールチップ＝触る前から「何があるか」を伝える */
+  content:attr(data-label);
+  position:absolute;top:calc(100% + 8px);right:0;
+  font-family:var(--mono);font-size:10px;letter-spacing:.06em;
+  color:var(--ink);background:var(--tile);
+  border:1.5px solid var(--ink);border-radius:4px;
+  padding:2px 7px;white-space:nowrap;
+  opacity:0;transform:translateY(-3px);pointer-events:none;
+  transition:opacity .18s var(--ease), transform .18s var(--ease);
+}
+.nav__pip:hover,.nav__pip:focus-visible{transform:scale(1.25)}
+.nav__pip:hover::after,.nav__pip:focus-visible::after{opacity:1;transform:none}
+.nav__pip[aria-current="true"]{background:var(--play);transform:scale(1.15)}
+
+/* ============================================================
+   レイアウト共通
+   ============================================================ */
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--gut)}
+section{position:relative;padding-block:clamp(80px,13vh,150px)}
+
+.shead{
+  display:flex;align-items:baseline;gap:calc(var(--u)*2);
+  margin-bottom:calc(var(--u)*6);flex-wrap:wrap;
+  border-bottom:2px solid var(--ink);padding-bottom:calc(var(--u)*2);
+}
+.shead__no{
+  font-family:var(--mono);font-size:13px;font-weight:700;
+  color:var(--play-ink);letter-spacing:.04em;
+}
+.shead__title{
+  font-family:var(--disp);font-weight:700;font-optical-sizing:auto;
+  font-size:clamp(26px,4vw,44px);line-height:1.02;letter-spacing:-.01em;
+  color:var(--ink);
+}
+.shead__note{
+  margin-left:auto;font-family:var(--mono);font-size:11px;
+  color:var(--ink-3);letter-spacing:.04em;align-self:center;
+}
+
+/* ============================================================
+   HERO — 活字ブロックでできた会社名。つかんで放れる。離すと揃う。
+   ============================================================ */
+.hero{
+  min-height:100svh;position:relative;
+  display:flex;flex-direction:column;justify-content:center;
+  padding-top:calc(var(--u)*12);
+  overflow:hidden;
+}
+.hero__inner{
+  position:relative;z-index:2;width:100%;
+  max-width:var(--maxw);margin:0 auto;padding:0 var(--gut);
+}
+.hero__eyebrow{
+  font-family:var(--mono);font-size:13px;font-weight:700;
+  color:var(--ink);letter-spacing:.06em;
+  margin-bottom:calc(var(--u)*3);
+  display:inline-flex;align-items:center;gap:calc(var(--u)*1.5);
+}
+.hero__eyebrow .spark{
+  width:9px;height:9px;border-radius:50%;background:var(--play);
+  animation:pulse 2.4s var(--ease) infinite;
+}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.55);opacity:.55}}
+
+/* 活字ステージ：canvasがブロックを描く。下に静的フォールバック見出しを置く */
+.stage{
+  position:relative;
+  width:100%;
+  /* 高さは行数で確保。canvasはこの上に重なる */
+  aspect-ratio: 16 / 7;
+  max-height: 52vh;
+  margin-bottom: calc(var(--u)*3);
+}
+#type-canvas{
+  position:absolute;inset:0;width:100%;height:100%;
+  display:block;touch-action:pan-y;cursor:grab;
+}
+#type-canvas:active{cursor:grabbing}
+/* JS無効/フォールバック時に見える確定見出し（canvas起動で隠す） */
+.stage__fallback{
+  position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;
+}
+.stage__fallback h1{
+  font-family:var(--disp);font-weight:900;font-optical-sizing:auto;
+  font-size:clamp(36px,9vw,128px);line-height:.92;letter-spacing:-.02em;
+  color:var(--ink);overflow-wrap:anywhere;
+}
+.stage--live .stage__fallback{visibility:hidden}
+
+.hero__lead{
+  max-width:46ch;font-size:clamp(16px,1.7vw,19px);
+  color:var(--ink-2);line-height:1.7;
+}
+.hero__lead b{color:var(--ink);font-weight:700}
+.hero__lead .pi{ /* "触ってみて" の遊び指示 */
+  color:var(--play-ink);font-weight:700;
+}
+.hero__cta{
+  margin-top:calc(var(--u)*5);display:flex;gap:calc(var(--u)*2);flex-wrap:wrap;
+}
+
+/* 活版ボタン：実体影。hoverで沈み込む（押せそう＝マイクロインタラクション） */
+.btn{
+  font-family:var(--mono);font-weight:700;font-size:14px;letter-spacing:.02em;
+  padding:calc(var(--u)*2) calc(var(--u)*3.5);
+  border:2px solid var(--ink);border-radius:6px;
+  display:inline-flex;align-items:center;gap:calc(var(--u)*1.25);
+  transition:transform .14s var(--ease), box-shadow .14s var(--ease), background .18s var(--ease);
+}
+.btn .arrow{transition:transform .18s var(--ease-back)}
+.btn:hover .arrow{transform:translateX(4px)}
+.btn--primary{background:var(--play-d);color:var(--paper);box-shadow:var(--shadow-s)}
+.btn--primary:hover{transform:translate(3px,3px);box-shadow:2px 2px 0 rgba(22,19,15,.9);background:var(--play-d)}
+.btn--ghost{background:var(--tile);color:var(--ink);box-shadow:var(--shadow-s)}
+.btn--ghost:hover{transform:translate(3px,3px);box-shadow:2px 2px 0 rgba(22,19,15,.9)}
+
+/* 性能の可視化（隙③）＝ おもちゃのスコアボード風HUD */
+.hud{
+  position:absolute;right:var(--gut);bottom:calc(var(--u)*4);z-index:3;
+  font-family:var(--mono);font-size:11px;color:var(--ink-3);
+  text-align:right;line-height:1.9;pointer-events:none;letter-spacing:.02em;
+}
+.hud .v{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
+.hud .v.warn{color:var(--play)}
+.hud .v.good{color:var(--cobalt)}
+
+.scroll-hint{
+  position:absolute;left:var(--gut);bottom:calc(var(--u)*4);z-index:3;
+  font-family:var(--mono);font-size:10px;color:var(--ink-3);
+  letter-spacing:.18em;text-transform:uppercase;
+  display:flex;align-items:center;gap:var(--u);
+}
+.scroll-hint::after{
+  content:"";width:26px;height:2px;background:var(--ink);transform-origin:left;
+  animation:slide 1.8s var(--ease) infinite;
+}
+@keyframes slide{0%{transform:scaleX(0)}50%{transform:scaleX(1)}100%{transform:scaleX(0);transform-origin:right}}
+
+/* ============================================================
+   VALUE — 3枚の「傾くカード」。カーソルに向き、離すと水平に戻る。
+   遊び（傾き）＝飾りでなく、各価値の意味を担う。
+   ============================================================ */
+.values{
+  display:grid;gap:calc(var(--u)*3);
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+}
+.val{
+  background:var(--tile);border:2px solid var(--ink);border-radius:10px;
+  padding:calc(var(--u)*4);box-shadow:var(--shadow-s);
+  position:relative;
+  transform-style:preserve-3d;will-change:transform;
+  transition:box-shadow .2s var(--ease);
+}
+.val:hover{box-shadow:var(--shadow)}
+.val__tag{
+  font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.04em;
+  color:var(--play-ink);margin-bottom:calc(var(--u)*2);
+  display:inline-flex;align-items:center;gap:var(--u);
+}
+.val__tag::before{content:"";width:16px;height:2px;background:var(--play)}
+.val__h{
+  font-family:var(--disp);font-weight:700;font-size:24px;line-height:1.2;
+  color:var(--ink);margin-bottom:calc(var(--u)*1.5);
+}
+.val__p{color:var(--ink-2);font-size:15px;line-height:1.7}
+.val__p b{color:var(--ink);font-weight:700}
+.val__face{ /* 3D の前面。子要素を少し手前に出す */
+  transform:translateZ(30px);
+}
+
+/* ============================================================
+   PROCESS — 「つまみ」を回すように進む工程。AIは非開示。
+   手段でなく「決める→散らす→締める」の所作で語る。
+   ============================================================ */
+.proc{display:flex;flex-direction:column}
+.step{
+  display:grid;grid-template-columns:minmax(64px,auto) 1fr;
+  gap:calc(var(--u)*3);align-items:start;
+  padding:calc(var(--u)*4) 0;border-top:2px solid var(--ink);
+  position:relative;
+}
+.step:last-child{border-bottom:2px solid var(--ink)}
+.step__knob{
+  width:48px;height:48px;border-radius:50%;
+  border:2px solid var(--ink);background:var(--tile);
+  display:grid;place-items:center;box-shadow:var(--shadow-s);
+  font-family:var(--mono);font-weight:700;font-size:14px;color:var(--ink);
+  position:relative;transition:transform .4s var(--ease-back);
+}
+.step__knob::after{ /* つまみの指標線 */
+  content:"";position:absolute;top:6px;left:50%;width:2px;height:9px;
+  background:var(--play);transform:translateX(-50%);
+}
+.step:hover .step__knob{transform:rotate(120deg)}
+.step__body h3{
+  font-family:var(--disp);font-weight:700;font-size:clamp(21px,2.6vw,28px);
+  line-height:1.15;color:var(--ink);margin-bottom:calc(var(--u)*1.5);
+}
+.step__body p{color:var(--ink-2);max-width:58ch;font-size:15px}
+.step__body p b{color:var(--ink);font-weight:700}
+.step__rule{
+  font-family:var(--mono);font-size:11px;color:var(--cobalt);
+  margin-top:calc(var(--u)*2);letter-spacing:.02em;
+  display:inline-flex;gap:var(--u);align-items:baseline;
+}
+.step__rule::before{content:"//";color:var(--ink-3)}
+
+/* ============================================================
+   WORKS — 実績ファースト。5枚の「めくれるスコアカード」。
+   hoverで持ち上がり、数値（客観評価）が前に出る。
+   ============================================================ */
+.works{display:grid;gap:calc(var(--u)*2.5)}
+.work{
+  background:var(--tile);border:2px solid var(--ink);border-radius:10px;
+  padding:calc(var(--u)*3.5) calc(var(--u)*4);
+  display:grid;grid-template-columns:auto 1fr auto;gap:calc(var(--u)*3);
+  align-items:center;box-shadow:var(--shadow-s);
+  transition:transform .22s var(--ease-back), box-shadow .22s var(--ease);
+}
+.work:hover,.work:focus-within{transform:translate(-3px,-3px);box-shadow:var(--shadow)}
+.work__no{
+  font-family:var(--mono);font-weight:700;font-size:13px;color:var(--play-ink);
+  letter-spacing:.02em;
+}
+.work__main{min-width:0}
+.work__title{
+  font-family:var(--disp);font-weight:700;font-size:clamp(19px,2.3vw,25px);
+  line-height:1.2;color:var(--ink);margin-bottom:4px;
+}
+.work__meta{font-size:13px;color:var(--ink-3);font-family:var(--mono);letter-spacing:.01em}
+.work__metrics{display:flex;gap:calc(var(--u)*3.5);flex-shrink:0}
+.metric{font-family:var(--mono);text-align:right}
+.metric .v{font-size:clamp(19px,2.4vw,26px);font-weight:700;color:var(--ink);
+  font-variant-numeric:tabular-nums;line-height:1;display:block;}
+.metric .v.win{color:var(--play-ink)}
+.metric .v.tech{color:var(--cobalt)}
+.metric .l{font-size:9px;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase;
+  margin-top:6px;display:block;}
+.works__foot{margin-top:calc(var(--u)*4)}
+.linkmore{
+  font-family:var(--mono);font-size:14px;font-weight:700;color:var(--ink);
+  display:inline-flex;align-items:center;gap:var(--u);
+  border-bottom:2px solid var(--play);padding-bottom:3px;
+  transition:gap .2s var(--ease);
+}
+.linkmore:hover{gap:calc(var(--u)*2)}
+
+/* ============================================================
+   CONTACT — 余白と自信でクローズ。最後の一画面まで遊びを切らさない。
+   ============================================================ */
+.contact{background:var(--ink);color:var(--paper);border-radius:0}
+.contact .wrap{padding-block:0}
+.contact__inner{
+  display:grid;grid-template-columns:1.25fr .75fr;gap:calc(var(--u)*6);align-items:end;
+}
+.contact__h{
+  font-family:var(--disp);font-weight:900;font-optical-sizing:auto;
+  font-size:clamp(34px,6.2vw,80px);line-height:.98;letter-spacing:-.02em;color:var(--paper);
+}
+.contact__h .play{color:var(--play)}
+.contact__p{color:#C9C2B4;margin-top:calc(var(--u)*3);max-width:40ch;font-size:16px}
+.contact__cta{margin-top:calc(var(--u)*5)}
+.btn--invert{background:var(--play-d);color:var(--paper);border-color:var(--play-d);
+  box-shadow:6px 6px 0 rgba(243,239,230,.18)}
+.btn--invert:hover{transform:translate(3px,3px);box-shadow:2px 2px 0 rgba(243,239,230,.18);background:var(--play-d)}
+.contact__side{font-family:var(--mono);font-size:13px;color:#C9C2B4;line-height:2}
+.contact__side .row{display:flex;justify-content:space-between;gap:var(--u);
+  border-bottom:1px solid rgba(243,239,230,.18);padding:calc(var(--u)*1.5) 0;}
+.contact__side .row span:last-child{color:var(--paper)}
+
+/* ============================================================
+   FOOTER — 「おもちゃの箱の底」。空状態の遊び心も一貫させる。
+   ============================================================ */
+.foot{background:var(--ink);color:#9A9488;padding:calc(var(--u)*4) 0 calc(var(--u)*5)}
+.foot .wrap{display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:calc(var(--u)*2);font-family:var(--mono);font-size:11px;
+  border-top:1px solid rgba(243,239,230,.14);padding-top:calc(var(--u)*4)}
+.foot__play{
+  display:inline-flex;align-items:center;gap:var(--u);
+  color:#9A9488;
+}
+.foot__play b{color:var(--paper);font-weight:700}
+/* イースターエッグの誘い（押すと活字が散る／JSで） */
+.foot__shuffle{
+  border:1.5px solid rgba(243,239,230,.3);border-radius:5px;
+  padding:5px 11px;color:var(--paper);font-weight:700;font-size:11px;
+  transition:border-color .2s var(--ease), transform .15s var(--ease-back);
+}
+.foot__shuffle:hover{border-color:var(--play);transform:rotate(-3deg)}
+
+/* ============================================================
+   スクロールリビール
+   ============================================================ */
+.reveal{opacity:0;transform:translateY(20px);
+  transition:opacity .6s var(--ease), transform .6s var(--ease);}
+.reveal.in{opacity:1;transform:none}
+.reveal[data-d="1"]{transition-delay:.07s}
+.reveal[data-d="2"]{transition-delay:.14s}
+.reveal[data-d="3"]{transition-delay:.21s}
+.reveal[data-d="4"]{transition-delay:.28s}
+
+/* ============================================================
+   reduced-motion：遊びを必ず止める。情報は完全保持。
+   ============================================================ */
+@media (prefers-reduced-motion: reduce){
+  .reveal{opacity:1;transform:none;transition:none}
+  .hero__eyebrow .spark,.scroll-hint::after{animation:none}
+  .btn,.work,.val,.step__knob,.nav__pip,.linkmore,.foot__shuffle{transition:none}
+}
+
+/* ============================================================
+   レスポンシブ
+   ============================================================ */
+@media (max-width: 880px){
+  .nav__pip::after{display:none}
+  .contact__inner{grid-template-columns:1fr;gap:calc(var(--u)*4)}
+  .work{grid-template-columns:auto 1fr;grid-template-areas:"no main" "metrics metrics"}
+  .work__no{grid-area:no}.work__main{grid-area:main}
+  .work__metrics{grid-area:metrics;justify-content:flex-start;
+    border-top:1.5px solid var(--line);padding-top:calc(var(--u)*2)}
+  .hud{display:none}
+  /* モバイル：3行レイアウトに合わせて縦を確保。高さがfsを握り、横にあふれない */
+  .stage{aspect-ratio:auto;max-height:none;height:38vh;min-height:240px}
+}
+@media (max-width: 520px){
+  .hero__cta{flex-direction:column;align-items:stretch}
+  .btn{justify-content:center}
+  .work__metrics{gap:calc(var(--u)*2.5);flex-wrap:wrap}
+  .scroll-hint{display:none}
+}
+</style>
+</head>
+<body>
+
+<a class="skip" href="#main">本文へスキップ</a>
+
+<!-- ============ 実験的ナビ：点字ドット・スライダー（隙①） ============ -->
+<nav class="nav" aria-label="セクションナビゲーション">
+  <a class="nav__brand" href="#hero"><span class="nav__dot" aria-hidden="true"></span>CLAUDE CODE CO.</a>
+  <div class="nav__dots" aria-label="セクション">
+    <button class="nav__pip" type="button" data-target="#hero"    data-label="00 / TOP"     aria-label="トップへ"></button>
+    <button class="nav__pip" type="button" data-target="#value"   data-label="01 / VALUE"   aria-label="提供価値へ"></button>
+    <button class="nav__pip" type="button" data-target="#process" data-label="02 / PROCESS" aria-label="制作プロセスへ"></button>
+    <button class="nav__pip" type="button" data-target="#works"   data-label="03 / WORKS"   aria-label="実績へ"></button>
+    <button class="nav__pip" type="button" data-target="#contact" data-label="04 / CONTACT" aria-label="お問い合わせへ"></button>
+  </div>
+</nav>
+
+<main id="main">
+
+  <!-- ==================== HERO ==================== -->
+  <header class="hero" id="hero">
+    <div class="hero__inner">
+      <p class="hero__eyebrow"><span class="spark" aria-hidden="true"></span>WEB制作スタジオ / 触って確かめられる</p>
+
+      <!-- 活字ステージ：canvasが会社名ブロックを物理で動かす -->
+      <div class="stage" id="stage">
+        <canvas id="type-canvas" aria-hidden="true"></canvas>
+        <div class="stage__fallback">
+          <h1>クロードコード<br>カンパニー</h1>
+        </div>
+      </div>
+
+      <p class="hero__lead">
+        最初の一画面で実力を証明し、最後の一画面まで精度を落とさない。<br>
+        この社名は活字ブロックでできています。<span class="pi">つかんで、放ってみてください。</span>
+        必ず <b>0.1px の定位置</b>へ戻ります——<b>遊べるのに、作りは超精密</b>。
+      </p>
+
+      <div class="hero__cta">
+        <a class="btn btn--primary" href="#contact">相談する <span class="arrow" aria-hidden="true">→</span></a>
+        <a class="btn btn--ghost" href="#works">実績を見る <span class="arrow" aria-hidden="true">→</span></a>
+      </div>
+    </div>
+
+    <!-- 性能の可視化（隙③） -->
+    <div class="hud" aria-hidden="true">
+      <div>RENDER <span class="v" id="hud-fps">— fps</span></div>
+      <div>BLOCKS <span class="v" id="hud-blocks">0</span></div>
+      <div>JS <span class="v good">0 kb · no framework</span></div>
+    </div>
+
+    <div class="scroll-hint" aria-hidden="true">SCROLL TO PLAY</div>
+  </header>
+
+  <!-- ==================== VALUE ==================== -->
+  <section id="value" aria-labelledby="value-h">
+    <div class="wrap">
+      <div class="shead reveal">
+        <span class="shead__no">01</span>
+        <h2 class="shead__title" id="value-h">遊びにも、寸法がある</h2>
+        <span class="shead__note">VALUE / 3 CARDS — カードはカーソルに傾き、離すと水平に戻る</span>
+      </div>
+
+      <div class="values">
+        <article class="val reveal" data-d="1" data-tilt>
+          <div class="val__face">
+            <p class="val__tag">第一画面</p>
+            <h3 class="val__h">3秒で、手が止まる</h3>
+            <p class="val__p">開いた瞬間に「ただ者でない」を立てる。<b>飾りではなく、技術そのものを掴みにする</b>。意味のない演出は一つも置きません。</p>
+          </div>
+        </article>
+        <article class="val reveal" data-d="2" data-tilt>
+          <div class="val__face">
+            <p class="val__tag">全行程</p>
+            <h3 class="val__h">隅まで、段差ゼロ</h3>
+            <p class="val__p">ヒーローの精度を、フォーカス・空データ・モバイルの隅まで落としません。<b>見えないところにこそ、格が出る</b>。</p>
+          </div>
+        </article>
+        <article class="val reveal" data-d="3" data-tilt>
+          <div class="val__face">
+            <p class="val__tag">体感速度</p>
+            <h3 class="val__h">軽さで、攻める</h3>
+            <p class="val__p">この遊びは外部画像ゼロ・フレームワーク0kb・素のCanvas。<b>軽さは品質の証拠</b>。数値で見せる主義です。</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== PROCESS（AI非開示） ==================== -->
+  <section id="process" aria-labelledby="process-h">
+    <div class="wrap">
+      <div class="shead reveal">
+        <span class="shead__no">02</span>
+        <h2 class="shead__title" id="process-h">決める、散らす、締める</h2>
+        <span class="shead__note">PROCESS / 3 STEPS</span>
+      </div>
+
+      <div class="proc">
+        <article class="step reveal" data-d="1">
+          <div class="step__knob" aria-hidden="true">01</div>
+          <div class="step__body">
+            <h3>決める — 誰に、何を、なぜ</h3>
+            <p>つくる前に、ターゲットとゴールを言葉で固める。<b>装飾の前に、意図を確定させます</b>。外さないための、いちばん大事な工程です。</p>
+            <p class="step__rule">目的のない要素は、ここで全部おろす</p>
+          </div>
+        </article>
+        <article class="step reveal" data-d="2">
+          <div class="step__knob" aria-hidden="true">02</div>
+          <div class="step__body">
+            <h3>散らす — 3案で、方向を競わせる</h3>
+            <p>毎案件、方向の違う3案を立てて最適解を競わせます。<b>似た案は社内で差し戻す</b>。「A案の構成＋C案の配色」のように、混ぜて使える余地を残して提案します。</p>
+            <p class="step__rule">既視感・テンプレ臭は、提案に出さない</p>
+          </div>
+        </article>
+        <article class="step reveal" data-d="3">
+          <div class="step__knob" aria-hidden="true">03</div>
+          <div class="step__body">
+            <h3>締める — 品質で、証明する</h3>
+            <p>コントラスト・キーボード到達・性能を、数値で検査してから納めます。<b>口頭の品質保証は信じない。実機で出す</b>。この遊び自体が、その証拠です。</p>
+            <p class="step__rule">AA 4.5:1 未満・reduced-motion未対応は、出荷しない</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== WORKS（実績ファースト） ==================== -->
+  <section id="works" aria-labelledby="works-h">
+    <div class="wrap">
+      <div class="shead reveal">
+        <span class="shead__no">03</span>
+        <h2 class="shead__title" id="works-h">遊んだ分だけ、数字が残る</h2>
+        <span class="shead__note">WORKS / 5 SELECTED</span>
+      </div>
+
+      <div class="works">
+        <a class="work reveal" data-d="1" href="#contact" aria-label="W-001 精密機器メーカー コーポレートサイト の詳細">
+          <span class="work__no">W—001</span>
+          <span class="work__main">
+            <span class="work__title">精密機器メーカー コーポレートサイト</span>
+            <span class="work__meta">設計・実装・性能設計 / B2B / 2026</span>
+          </span>
+          <span class="work__metrics">
+            <span class="metric"><span class="v tech">99</span><span class="l">Perf</span></span>
+            <span class="metric"><span class="v win">+38%</span><span class="l">問合せ</span></span>
+            <span class="metric"><span class="v">SOTD</span><span class="l">受賞</span></span>
+          </span>
+        </a>
+
+        <a class="work reveal" data-d="1" href="#contact" aria-label="W-002 SaaSスタートアップ ブランドLP の詳細">
+          <span class="work__no">W—002</span>
+          <span class="work__main">
+            <span class="work__title">SaaSスタートアップ ブランドLP</span>
+            <span class="work__meta">戦略・コピー・実装 / SaaS / 2025</span>
+          </span>
+          <span class="work__metrics">
+            <span class="metric"><span class="v tech">100</span><span class="l">A11y</span></span>
+            <span class="metric"><span class="v win">2.1×</span><span class="l">CVR</span></span>
+            <span class="metric"><span class="v">0.8s</span><span class="l">LCP</span></span>
+          </span>
+        </a>
+
+        <a class="work reveal" data-d="2" href="#contact" aria-label="W-003 老舗ブランド リブランディング の詳細">
+          <span class="work__no">W—003</span>
+          <span class="work__main">
+            <span class="work__title">老舗ブランド リブランディング</span>
+            <span class="work__meta">ブランド設計・サイト一式 / 製造 / 2025</span>
+          </span>
+          <span class="work__metrics">
+            <span class="metric"><span class="v tech">98</span><span class="l">Perf</span></span>
+            <span class="metric"><span class="v win">×3.4</span><span class="l">滞在</span></span>
+            <span class="metric"><span class="v">FWA</span><span class="l">受賞</span></span>
+          </span>
+        </a>
+
+        <a class="work reveal" data-d="2" href="#contact" aria-label="W-004 文化施設 ビジュアルアーカイブ の詳細">
+          <span class="work__no">W—004</span>
+          <span class="work__main">
+            <span class="work__title">文化施設 ビジュアルアーカイブ</span>
+            <span class="work__meta">UX設計・インタラクション実装 / 公共 / 2024</span>
+          </span>
+          <span class="work__metrics">
+            <span class="metric"><span class="v tech">96</span><span class="l">Perf</span></span>
+            <span class="metric"><span class="v win">60</span><span class="l">fps</span></span>
+            <span class="metric"><span class="v">12k</span><span class="l">MAU</span></span>
+          </span>
+        </a>
+
+        <a class="work reveal" data-d="3" href="#contact" aria-label="W-005 D2C コスメ 立ち上げEC の詳細">
+          <span class="work__no">W—005</span>
+          <span class="work__main">
+            <span class="work__title">D2C コスメ 立ち上げEC</span>
+            <span class="work__meta">設計・実装・運用設計 / D2C / 2024</span>
+          </span>
+          <span class="work__metrics">
+            <span class="metric"><span class="v tech">99</span><span class="l">Perf</span></span>
+            <span class="metric"><span class="v win">+52%</span><span class="l">売上</span></span>
+            <span class="metric"><span class="v">0.6s</span><span class="l">LCP</span></span>
+          </span>
+        </a>
+      </div>
+
+      <div class="works__foot reveal">
+        <a class="linkmore" href="#contact">すべての実績を見る <span aria-hidden="true">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== CONTACT ==================== -->
+  <section id="contact" class="contact" aria-labelledby="contact-h">
+    <div class="wrap" style="padding-block:clamp(80px,13vh,150px)">
+      <div class="contact__inner">
+        <div class="reveal">
+          <h2 class="contact__h" id="contact-h">まず、<span class="play">一度</span><br>触ってみて。</h2>
+          <p class="contact__p">課題の整理から始めます。売り込みはしません。3案を見て、方向を決めるところから、一緒に。</p>
+          <div class="contact__cta">
+            <a class="btn btn--invert" href="mailto:hello@claudecode.co">相談する <span class="arrow" aria-hidden="true">→</span></a>
+          </div>
+        </div>
+        <div class="contact__side reveal" data-d="1">
+          <div class="row"><span>CONTACT</span><span>hello@claudecode.co</span></div>
+          <div class="row"><span>RESPONSE</span><span>1営業日以内</span></div>
+          <div class="row"><span>SCOPE</span><span>設計 — 実装 — 運用</span></div>
+          <div class="row"><span>STACK</span><span>素の精度 / no bloat</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="foot">
+  <div class="wrap">
+    <span>© 2026 CLAUDE CODE COMPANY — 案W / niko</span>
+    <span class="foot__play">
+      <b>PLAYFUL, BUILT PRECISE.</b>
+      <button class="foot__shuffle" id="shuffle" type="button">活字をもう一度散らす ↺</button>
+    </span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+  var reduce = mq.matches;
+  var fine = window.matchMedia("(pointer:fine)").matches;
+
+  /* ========================================================
+     1) HERO 活字物理エンジン（素のCanvas / 0kb）
+        会社名を「活字ブロック」に分解。
+        - 各ブロックは定位置(homeX,homeY)を持つ
+        - つかんで放ると速度を得て飛ぶ／枠で弾む
+        - 臨界制動バネで必ず定位置へ吸着して揃う
+        ＝ "遊べるのに、作りは超精密" を物理で証明
+        reduced-motion：動かさず、整列済みの社名を一度だけ描く
+     ======================================================== */
+  var stage = document.getElementById("stage");
+  var canvas = document.getElementById("type-canvas");
+  var hudFps = document.getElementById("hud-fps");
+  var hudBlocks = document.getElementById("hud-blocks");
+
+  if (canvas && canvas.getContext){
+    var ctx = canvas.getContext("2d");
+    var W=0,H=0,DPR=1,playW=0;
+    // 社名を1文字＝1ブロックに分解。行割りは幅で切り替える（モバイルで見切れさせない）。
+    var CHARS_WIDE   = [["ク","ロ","ー","ド","コ","ー","ド"], ["カ","ン","パ","ニ","ー"]]; // 広い画面：2行
+    var CHARS_NARROW = [["ク","ロ","ー","ド"], ["コ","ー","ド"], ["カ","ン","パ","ニ","ー"]]; // 狭い画面：3行（最長5字）
+    var LINES = CHARS_WIDE;
+    var blocks = [];
+    var dragging = null;       // {b, dx, dy}
+    var pointer = {x:0,y:0,px:0,py:0,down:false};
+    var introT = 0;            // 0→1 イントロ落下の進行
+
+    function maxLen(set){
+      var m=0; for(var i=0;i<set.length;i++){ if(set[i].length>m) m=set[i].length; } return m;
+    }
+
+    function layout(){
+      DPR = Math.min(window.devicePixelRatio||1, 2);
+      var r = canvas.getBoundingClientRect();
+      W = r.width; H = r.height;
+      canvas.width = Math.round(W*DPR);
+      canvas.height = Math.round(H*DPR);
+      ctx.setTransform(DPR,0,0,DPR,0,0);
+
+      // 行割りを幅で選ぶ：狭い画面では3行（最長5字）にして必ず収める
+      LINES = (W < 560) ? CHARS_NARROW : CHARS_WIDE;
+      // 行割りが変わったらブロックを作り直す（wide/narrowは合計文字数が同じ＝.lengthでは判定不可。keyで判定）
+      var layoutKey = (W < 560) ? "narrow" : "wide";
+      if(layoutKey !== blocks.__key){ blocks = []; blocks.__key = layoutKey; }
+
+      // 描画に使う実効幅：canvas幅と「実ビューポート幅」の小さい方を採用。
+      // （ヘッドレスや特殊環境でcanvasが実画面より広く測られても、必ず画面内に収める）
+      var vpW = Math.min(W, document.documentElement.clientWidth || W);
+      // 左右に安全マージンを確保（端で見切れない）。落として弾む遊びの分も見込んで厚めに。
+      var sideMargin = Math.max(10, vpW*0.06);
+      var usableW = vpW - sideMargin*2;
+      // モバイル（狭い）では実機の最小幅(=360px相当)でも確実に収まるよう、横の使える幅に上限を掛ける
+      if(layoutKey === "narrow"){ usableW = Math.min(usableW, 360 - sideMargin*2); }
+      var ml = maxLen(LINES);
+      // 各セルは fs（＋gap）。最長行 ml*(fs+gap)-gap が usableW に収まる fs を解く。
+      // gap = fs*0.04 として ml*fs*1.04 - fs*0.04 <= usableW
+      var fsByWidth = (usableW) / (ml*1.04 - 0.04);
+      var fsByHeight = H / (LINES.length*1.22); // 行数で高さも制約
+      var fs = Math.min(fsByWidth, fsByHeight);
+      fs = Math.max(20, fs); // 過小防止のみ。上限は幅/高さが握る＝はみ出さない
+      var gap = fs*0.04;
+      var lineH = fs*1.12;
+      var totalH = LINES.length*lineH;
+      var startY = (H-totalH)/2;
+
+      // 既存ブロックの「現在位置」は保持（リサイズで飛ばさない）
+      // 中央寄せの基準幅：狭い画面では「確実に見える幅(=360上限)」内で中央化し、右端クリップを防ぐ
+      var centerW = (layoutKey === "narrow") ? Math.min(vpW, 360) : vpW;
+      playW = centerW; // 物理の弾む左右壁も基準幅に合わせる（画面外に飛ばさない）
+      var existing = blocks.length;
+      var idx=0;
+      for(var li=0; li<LINES.length; li++){
+        var line = LINES[li];
+        var lineW = line.length*(fs+gap)-gap;
+        var startX = (centerW-lineW)/2;
+        for(var ci=0; ci<line.length; ci++){
+          var hx = startX + ci*(fs+gap);
+          var hy = startY + li*lineH;
+          if(idx<existing){
+            var b=blocks[idx];
+            b.homeX=hx; b.homeY=hy; b.size=fs; b.char=line[ci];
+          } else {
+            blocks.push({
+              char: line[ci], size: fs,
+              homeX: hx, homeY: hy,
+              x: hx, y: reduce? hy : (hy - H - Math.random()*H*0.6), // イントロ：上から落とす
+              vx: 0, vy: 0,
+              rot: 0, vr: 0, homeRot: 0
+            });
+          }
+          idx++;
+        }
+      }
+      if(hudBlocks) hudBlocks.textContent = blocks.length;
+    }
+
+    function drawBlock(b){
+      ctx.save();
+      ctx.translate(b.x + b.size/2, b.y + b.size/2);
+      ctx.rotate(b.rot);
+      var s=b.size;
+      // 活版ブロック：実体影 → 面 → 枠 → 文字
+      ctx.fillStyle = "rgba(22,19,15,.92)";
+      ctx.fillRect(-s/2+4, -s/2+4, s*0.92, s*0.92);     // ハードシャドウ
+      ctx.fillStyle = "#FBF8F1";
+      ctx.fillRect(-s/2, -s/2, s*0.92, s*0.92);          // 面
+      ctx.lineWidth = Math.max(1.5, s*0.03);
+      ctx.strokeStyle = "#16130F";
+      ctx.strokeRect(-s/2, -s/2, s*0.92, s*0.92);        // 枠
+      ctx.fillStyle = "#16130F";
+      ctx.font = '900 '+(s*0.58)+'px "Fraunces", serif';
+      ctx.textAlign="center"; ctx.textBaseline="middle";
+      ctx.fillText(b.char, -s*0.04, s*0.02);
+      ctx.restore();
+    }
+
+    // 臨界制動っぽいバネ（揃える＝精密）。引きずり時は無効。
+    var K=0.14, D=0.78, ROTK=0.12, ROTD=0.74;
+    function physics(b, isHeld){
+      if(isHeld) return;
+      // 定位置への復元力
+      b.vx += (b.homeX - b.x)*K;
+      b.vy += (b.homeY - b.y)*K;
+      b.vr += (b.homeRot - b.rot)*ROTK;
+      b.vx*=D; b.vy*=D; b.vr*=ROTD;
+      b.x += b.vx; b.y += b.vy; b.rot += b.vr;
+      // ステージ枠で弾む（飛ばしても画面外に消えない＝丁寧）。右壁は実効幅playW。
+      var s=b.size*0.92, m=2, right=(playW||W);
+      if(b.x < m){ b.x=m; b.vx*=-0.42; }
+      if(b.x+s > right-m){ b.x=right-m-s; b.vx*=-0.42; }
+      if(b.y < -s){ b.y=-s; b.vy*=-0.3; }
+      if(b.y+s > H+s){ b.y=H+s; b.vy*=-0.3; }
+    }
+
+    function hitTest(px,py){
+      for(var i=blocks.length-1;i>=0;i--){
+        var b=blocks[i], s=b.size*0.92;
+        if(px>=b.x && px<=b.x+s && py>=b.y && py<=b.y+s){
+          // 最後に触ったものを最前面へ
+          blocks.splice(i,1); blocks.push(b);
+          return b;
+        }
+      }
+      return null;
+    }
+
+    // --- FPS ---
+    var frames=0, lastFps=performance.now();
+    function fps(now){
+      frames++;
+      if(now-lastFps>=500){
+        var f=Math.round(frames*1000/(now-lastFps));
+        if(hudFps){ hudFps.textContent=f+" fps"; hudFps.classList.toggle("warn", f<50); }
+        frames=0; lastFps=now;
+      }
+    }
+
+    var running=true, raf=0;
+    function frame(now){
+      ctx.clearRect(0,0,W,H);
+      // イントロ：落下中はバネを少し弱め、着地後に揃う
+      for(var i=0;i<blocks.length;i++){
+        var b=blocks[i];
+        var held = dragging && dragging.b===b;
+        if(held){
+          // ポインタに追随。放した時の速度を記録
+          var tx = pointer.x - dragging.dx;
+          var ty = pointer.y - dragging.dy;
+          b.vx = tx-b.x; b.vy = ty-b.y;
+          b.x = tx; b.y = ty;
+          b.rot += (Math.max(-0.5,Math.min(0.5,b.vx*0.012)) - b.rot)*0.3; // 振り回すと傾く
+        } else {
+          physics(b, false);
+        }
+        drawBlock(b);
+      }
+      fps(now);
+      if(running) raf=requestAnimationFrame(frame);
+    }
+
+    // 静止描画（reduced-motion）：整列済みを1枚
+    function drawStatic(){
+      ctx.clearRect(0,0,W,H);
+      for(var i=0;i<blocks.length;i++){ var b=blocks[i]; b.x=b.homeX; b.y=b.homeY; b.rot=0; drawBlock(b); }
+      if(hudFps) hudFps.textContent="static";
+    }
+
+    function pos(e){
+      var r=canvas.getBoundingClientRect();
+      var t = (e.touches && e.touches.length) ? e.touches[0]
+            : (e.changedTouches && e.changedTouches.length) ? e.changedTouches[0]
+            : e;
+      return {x:t.clientX-r.left, y:t.clientY-r.top};
+    }
+
+    function onDown(e){
+      var p=pos(e); pointer.x=p.x; pointer.y=p.y;
+      var b=hitTest(p.x,p.y);
+      if(b){
+        dragging={b:b, dx:p.x-b.x, dy:p.y-b.y};
+        if(e.cancelable) e.preventDefault();
+      }
+    }
+    function onMove(e){
+      var p=pos(e); pointer.x=p.x; pointer.y=p.y;
+      if(dragging && e.cancelable) e.preventDefault();
+    }
+    function onUp(){ dragging=null; } // 放す＝バネが定位置へ吸着
+
+    function shuffle(){
+      for(var i=0;i<blocks.length;i++){
+        var b=blocks[i];
+        b.vx=(Math.random()-0.5)*46;
+        b.vy=(Math.random()-0.5)*46-10;
+        b.vr=(Math.random()-0.5)*0.6;
+      }
+    }
+
+    // 初期化
+    function init(){
+      layout();
+      if(stage) stage.classList.add("stage--live");
+      if(reduce){
+        drawStatic();
+        window.addEventListener("resize", function(){ layout(); drawStatic(); });
+        return;
+      }
+      raf=requestAnimationFrame(frame);
+      window.addEventListener("resize", layout);
+
+      // 入力（マウス＋タッチ）
+      canvas.addEventListener("mousedown", onDown);
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+      canvas.addEventListener("touchstart", onDown, {passive:false});
+      window.addEventListener("touchmove", onMove, {passive:false});
+      window.addEventListener("touchend", onUp);
+      window.addEventListener("touchcancel", onUp); // 中断ジェスチャでもブロックを離す
+
+      // タブが隠れたら止める（無駄を出さない＝軽さ）
+      document.addEventListener("visibilitychange", function(){
+        if(document.hidden){ running=false; cancelAnimationFrame(raf); }
+        else if(!reduce && !running){ running=true; lastFps=performance.now(); raf=requestAnimationFrame(frame); }
+      });
+
+      // フッターのイースターエッグ
+      var sh=document.getElementById("shuffle");
+      if(sh) sh.addEventListener("click", function(){
+        document.getElementById("hero").scrollIntoView({behavior:"smooth"});
+        setTimeout(shuffle, 420);
+      });
+
+      // ヒーローに最初に入った時、軽くひと弾みさせて「触れる」を示す
+      setTimeout(function(){ if(!reduce) shuffleSoft(); }, 1600);
+    }
+    function shuffleSoft(){
+      for(var i=0;i<blocks.length;i++){
+        var b=blocks[i];
+        b.vx+=(Math.random()-0.5)*10;
+        b.vy+=(Math.random()-0.5)*10;
+      }
+    }
+
+    // reduced-motion設定が後から変わっても追従
+    mq.addEventListener && mq.addEventListener("change", function(e){
+      reduce=e.matches;
+      if(reduce){ running=false; cancelAnimationFrame(raf); layout(); drawStatic(); }
+      else if(!running){ running=true; lastFps=performance.now(); raf=requestAnimationFrame(frame); }
+    });
+
+    init();
+  }
+
+  /* ========================================================
+     2) VALUE 傾くカード（3Dティルト）。離すと水平へ。
+     ======================================================== */
+  if(!reduce && fine){
+    document.querySelectorAll("[data-tilt]").forEach(function(card){
+      var raf2=0;
+      function onMove(e){
+        cancelAnimationFrame(raf2);
+        raf2=requestAnimationFrame(function(){
+          var r=card.getBoundingClientRect();
+          var px=(e.clientX-r.left)/r.width-0.5;
+          var py=(e.clientY-r.top)/r.height-0.5;
+          card.style.transform="perspective(800px) rotateX("+(-py*7)+"deg) rotateY("+(px*9)+"deg)";
+        });
+      }
+      function reset(){ cancelAnimationFrame(raf2); card.style.transform=""; }
+      card.addEventListener("mousemove", onMove);
+      card.addEventListener("mouseleave", reset);
+    });
+  }
+
+  /* ========================================================
+     3) スクロールリビール
+     ======================================================== */
+  if(!reduce && "IntersectionObserver" in window){
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add("in"); io.unobserve(en.target);} });
+    },{threshold:0.12, rootMargin:"0px 0px -8% 0px"});
+    document.querySelectorAll(".reveal").forEach(function(el){ io.observe(el); });
+  } else {
+    document.querySelectorAll(".reveal").forEach(function(el){ el.classList.add("in"); });
+  }
+
+  /* ========================================================
+     4) ナビ：現在地（pip）＋スムーズスクロール
+     ======================================================== */
+  var pips=[].slice.call(document.querySelectorAll(".nav__pip"));
+  var secs=pips.map(function(p){ return document.querySelector(p.dataset.target); });
+  pips.forEach(function(p){
+    p.addEventListener("click", function(){
+      var t=document.querySelector(p.dataset.target);
+      if(t) t.scrollIntoView({behavior: reduce?"auto":"smooth", block:"start"});
+    });
+  });
+  var tick=false;
+  function onScroll(){
+    if(tick) return; tick=true;
+    requestAnimationFrame(function(){
+      var cur=0, line=window.innerHeight*0.42;
+      for(var i=0;i<secs.length;i++){
+        if(secs[i] && secs[i].getBoundingClientRect().top<=line) cur=i;
+      }
+      pips.forEach(function(p,i){ if(i===cur){ p.setAttribute("aria-current","true"); } else { p.removeAttribute("aria-current"); } });
+      tick=false;
+    });
+  }
+  window.addEventListener("scroll", onScroll, {passive:true});
+  onScroll();
+
+})();
+</script>
+</body>
+</html>
